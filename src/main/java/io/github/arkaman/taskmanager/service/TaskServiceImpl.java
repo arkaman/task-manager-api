@@ -5,10 +5,10 @@ import io.github.arkaman.taskmanager.domain.dto.UpdateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.entity.Task;
 import io.github.arkaman.taskmanager.exception.TaskNotFoundException;
 import io.github.arkaman.taskmanager.repository.TaskRepository;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -22,7 +22,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Task createTask(CreateTaskRequestDto dto) {
-
         Task task = Task.builder()
                 .title(dto.title())
                 .description(dto.description())
@@ -34,8 +33,8 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public List<Task> listTasks() {
-        return taskRepository.findAll(Sort.by(Sort.Direction.ASC, "createdAt"));
+    public Page<Task> listTasks(Pageable pageable) {
+        return taskRepository.findAll(pageable);
     }
 
     @Override
@@ -46,7 +45,6 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public Task updateTask(UUID taskId, UpdateTaskRequestDto dto) {
-
         Task task = getTask(taskId);
 
         task.updateDetails(
@@ -63,11 +61,9 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public void deleteTask(UUID taskId) {
-
         if (!taskRepository.existsById(taskId)) {
             throw new TaskNotFoundException(taskId);
         }
-
         taskRepository.deleteById(taskId);
     }
 }

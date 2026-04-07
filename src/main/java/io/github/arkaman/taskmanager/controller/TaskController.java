@@ -1,17 +1,20 @@
 package io.github.arkaman.taskmanager.controller;
 
 import io.github.arkaman.taskmanager.domain.dto.CreateTaskRequestDto;
+import io.github.arkaman.taskmanager.domain.dto.PageResponse;
 import io.github.arkaman.taskmanager.domain.dto.TaskDto;
 import io.github.arkaman.taskmanager.domain.dto.UpdateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.entity.Task;
 import io.github.arkaman.taskmanager.mapper.TaskMapper;
 import io.github.arkaman.taskmanager.service.TaskService;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -37,13 +40,20 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskDto>> listTasks() {
-        List<TaskDto> tasks = taskService.listTasks()
-                .stream()
-                .map(taskMapper::toDto)
-                .toList();
+    public ResponseEntity<PageResponse<TaskDto>> listTasks(
+            @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
+    ) {
+        Page<Task> page = taskService.listTasks(pageable);
 
-        return ResponseEntity.ok(tasks);
+        PageResponse<TaskDto> response = new PageResponse<>(
+                page.getContent().stream().map(taskMapper::toDto).toList(),
+                page.getNumber(),
+                page.getSize(),
+                page.getTotalElements(),
+                page.getTotalPages()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{taskId}")
