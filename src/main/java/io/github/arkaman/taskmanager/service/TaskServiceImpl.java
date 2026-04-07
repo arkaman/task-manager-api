@@ -3,10 +3,14 @@ package io.github.arkaman.taskmanager.service;
 import io.github.arkaman.taskmanager.domain.dto.CreateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.dto.UpdateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.entity.Task;
+import io.github.arkaman.taskmanager.domain.entity.TaskPriority;
+import io.github.arkaman.taskmanager.domain.entity.TaskStatus;
 import io.github.arkaman.taskmanager.exception.TaskNotFoundException;
 import io.github.arkaman.taskmanager.repository.TaskRepository;
+import io.github.arkaman.taskmanager.repository.spec.TaskSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -33,8 +37,19 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Page<Task> listTasks(Pageable pageable) {
-        return taskRepository.findAll(pageable);
+    public Page<Task> listTasks(
+            TaskStatus status,
+            TaskPriority priority,
+            String keyword,
+            Pageable pageable
+    ) {
+
+        Specification<Task> spec = Specification
+                .where(TaskSpecification.hasStatus(status))
+                .and(TaskSpecification.hasPriority(priority))
+                .and(TaskSpecification.titleOrDescriptionContains(keyword));
+
+        return taskRepository.findAll(spec, pageable);
     }
 
     @Override

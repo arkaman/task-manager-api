@@ -5,6 +5,8 @@ import io.github.arkaman.taskmanager.domain.dto.PageResponse;
 import io.github.arkaman.taskmanager.domain.dto.TaskDto;
 import io.github.arkaman.taskmanager.domain.dto.UpdateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.entity.Task;
+import io.github.arkaman.taskmanager.domain.entity.TaskPriority;
+import io.github.arkaman.taskmanager.domain.entity.TaskStatus;
 import io.github.arkaman.taskmanager.mapper.TaskMapper;
 import io.github.arkaman.taskmanager.service.TaskService;
 import jakarta.validation.Valid;
@@ -41,9 +43,13 @@ public class TaskController {
 
     @GetMapping
     public ResponseEntity<PageResponse<TaskDto>> listTasks(
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority,
+            @RequestParam(required = false) String keyword,
             @PageableDefault(size = 10, sort = "createdAt") Pageable pageable
     ) {
-        Page<Task> page = taskService.listTasks(pageable);
+
+        Page<Task> page = taskService.listTasks(status, priority, keyword, pageable);
 
         PageResponse<TaskDto> response = new PageResponse<>(
                 page.getContent().stream().map(taskMapper::toDto).toList(),

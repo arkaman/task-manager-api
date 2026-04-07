@@ -3,6 +3,8 @@ package io.github.arkaman.taskmanager.service;
 import io.github.arkaman.taskmanager.domain.dto.CreateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.dto.UpdateTaskRequestDto;
 import io.github.arkaman.taskmanager.domain.entity.Task;
+import io.github.arkaman.taskmanager.domain.entity.TaskPriority;
+import io.github.arkaman.taskmanager.domain.entity.TaskStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -13,7 +15,12 @@ public interface TaskService {
 
     Task createTask(CreateTaskRequestDto dto);
 
-    Page<Task> listTasks(Pageable pageable);
+    Page<Task> listTasks(
+            TaskStatus status,
+            TaskPriority priority,
+            String keyword,
+            Pageable pageable
+    );
 
     Task getTask(UUID taskId);
 
