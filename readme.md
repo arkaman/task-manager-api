@@ -1,12 +1,15 @@
 # Task Manager API
 
-A RESTful Task Management API built using Spring Boot, Spring Data JPA, and PostgreSQL. This application allows users to create, update, retrieve, and delete tasks with proper validation and error handling.
+A RESTful Task Management API built using Spring Boot, Spring Data JPA, and PostgreSQL. This application allows users to create, update, retrieve, and delete tasks with validation, pagination, filtering, and search support.
 
 ---
 
 ## 🚀 Features
 
 * Create, update, delete, and retrieve tasks
+* Pagination support for task listing
+* Filtering by status and priority
+* Keyword search (title + description)
 * Input validation using Jakarta Validation
 * Global exception handling
 * Clean layered architecture (Controller, Service, Repository)
@@ -39,6 +42,7 @@ src/main/java/io/github/arkaman/taskmanager/
 ├── exception         # Custom Exceptions
 ├── mapper            # Entity ↔ DTO mapping
 ├── repository        # JPA Repositories
+│   └── spec          # Specifications for filtering/search
 ├── service           # Business Logic
 ```
 
@@ -113,10 +117,26 @@ mvn spring-boot:run
 POST /api/v1/tasks
 ```
 
-### Get All Tasks
+### Get Tasks
 
 ```
 GET /api/v1/tasks
+```
+
+#### Query Parameters
+
+| Parameter | Type | Description |
+|----------|------|-------------|
+| page     | int  | Page number (default: 0) |
+| size     | int  | Page size (default: 10) |
+| status   | enum | Filter by task status |
+| priority | enum | Filter by priority |
+| keyword  | string | Search in title & description |
+
+#### Example
+
+```
+GET /api/v1/tasks?status=PENDING&priority=HIGH&keyword=api&page=0&size=5
 ```
 
 ### Get Task by ID
@@ -168,7 +188,6 @@ All errors are returned in a consistent format:
 
 ## 🧠 Future Improvements
 
-* Pagination & filtering
 * Authentication & authorization (JWT)
 * Docker support
 * CI/CD pipeline
