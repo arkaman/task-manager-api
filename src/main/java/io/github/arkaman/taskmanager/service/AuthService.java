@@ -22,9 +22,9 @@ public class AuthService {
     @Transactional
     public void register(RegisterRequest request) {
 
-        String email = request.getEmail().trim().toLowerCase();
-        String username = request.getUsername().trim();
-        String password = request.getPassword();
+        String email = request.email().trim().toLowerCase();
+        String username = request.username().trim();
+        String password = request.password();
 
         if (repo.findByUsername(username).isPresent()) {
             throw new IllegalArgumentException("Username already taken");
