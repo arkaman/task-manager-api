@@ -1,9 +1,11 @@
 package io.github.arkaman.taskmanager.service;
 
+import io.github.arkaman.taskmanager.domain.dto.LoginRequest;
 import io.github.arkaman.taskmanager.domain.dto.RegisterRequest;
 import io.github.arkaman.taskmanager.domain.entity.AppUser;
 import io.github.arkaman.taskmanager.domain.entity.Role;
 import io.github.arkaman.taskmanager.repository.UserRepository;
+import io.github.arkaman.taskmanager.security.JwtService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,10 +15,12 @@ public class AuthService {
 
     private final UserRepository repo;
     private final PasswordEncoder encoder;
+    private final JwtService jwtService;
 
-    public AuthService(UserRepository repo, PasswordEncoder encoder) {
+    public AuthService(UserRepository repo, PasswordEncoder encoder, JwtService jwtService) {
         this.repo = repo;
         this.encoder = encoder;
+        this.jwtService = jwtService;
     }
 
     @Transactional
@@ -41,5 +45,18 @@ public class AuthService {
                 .build();
 
         repo.save(user);
+    }
+
+    public String login(LoginRequest request) {
+        String email = request.email().trim().toLowerCase();
+        String password = request.password();
+
+        AppUser user = repo.findByEmailIgnoreCase(email).orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+
+        if (!encoder.matches(password, user.getPassword())) {
+            throw new IllegalArgumentException("Invalid credentials");
+        }
+
+        return jwtService.generateToken(user.getEmail());
     }
 }

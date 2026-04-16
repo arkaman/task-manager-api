@@ -1,5 +1,6 @@
 package io.github.arkaman.taskmanager.controller;
 
+import io.github.arkaman.taskmanager.domain.dto.LoginRequest;
 import io.github.arkaman.taskmanager.domain.dto.RegisterRequest;
 import io.github.arkaman.taskmanager.service.AuthService;
 import jakarta.validation.Valid;
@@ -24,5 +25,11 @@ public class AuthController {
         service.register(request);
 
         return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
+        String token = service.login(request);
+        return ResponseEntity.ok(Map.of("token", token));
     }
 }

@@ -1,5 +1,6 @@
 package io.github.arkaman.taskmanager.repository.spec;
 
+import io.github.arkaman.taskmanager.domain.entity.AppUser;
 import io.github.arkaman.taskmanager.domain.entity.Task;
 import io.github.arkaman.taskmanager.domain.entity.TaskPriority;
 import io.github.arkaman.taskmanager.domain.entity.TaskStatus;
@@ -30,5 +31,9 @@ public class TaskSpecification {
                     cb.like(cb.lower(cb.coalesce(root.get("description"), "")), pattern)
             );
         };
+    }
+
+    public static Specification<Task> hasUser(AppUser user) {
+        return (root, query, cb) -> cb.equal(root.get("user"), user);
     }
 }
