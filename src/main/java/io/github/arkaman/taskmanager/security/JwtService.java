@@ -1,5 +1,6 @@
 package io.github.arkaman.taskmanager.security;
 
+import io.github.arkaman.taskmanager.exception.InvalidTokenException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -67,7 +68,7 @@ public class JwtService {
             String type = extractClaim(token, claims -> claims.get("type", String.class));
             return TokenType.valueOf(type);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid token type");
+            throw new InvalidTokenException();
         }
     }
 
@@ -92,7 +93,7 @@ public class JwtService {
         try {
             return extractAllClaims(token);
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid JWT token");
+            throw new InvalidTokenException();
         }
     }
 

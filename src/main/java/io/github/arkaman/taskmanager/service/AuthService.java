@@ -6,6 +6,7 @@ import io.github.arkaman.taskmanager.domain.dto.RegisterRequest;
 import io.github.arkaman.taskmanager.domain.entity.AppUser;
 import io.github.arkaman.taskmanager.domain.entity.RefreshToken;
 import io.github.arkaman.taskmanager.domain.entity.Role;
+import io.github.arkaman.taskmanager.exception.*;
 import io.github.arkaman.taskmanager.security.TokenType;
 import io.github.arkaman.taskmanager.repository.RefreshTokenRepository;
 import io.github.arkaman.taskmanager.repository.UserRepository;
@@ -44,10 +45,10 @@ public class AuthService {
         String username = request.username().trim();
         String password = request.password();
         if (repo.findByUsername(username).isPresent()) {
-            throw new IllegalArgumentException("Username already taken");
+            throw new UsernameAlreadyExistsException();
         }
         if (repo.findByEmailIgnoreCase(email).isPresent()) {
-            throw new IllegalArgumentException("Email already registered");
+            throw new EmailAlreadyExistsException();
         }
         AppUser user = AppUser.builder()
                 .username(username)
@@ -65,10 +66,10 @@ public class AuthService {
         String password = request.password();
 
         AppUser user = repo.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+                .orElseThrow(() -> new InvalidCredentialsException());
 
         if (!encoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("Invalid credentials");
+            throw new InvalidCredentialsException();
         }
 
         String accessToken = jwtService.generateAccessToken(email);
@@ -93,15 +94,15 @@ public class AuthService {
         TokenType type = jwtService.extractTokenType(refreshToken);
 
         if (type != TokenType.REFRESH) {
-            throw new IllegalArgumentException("Invalid token type");
+            throw new InvalidTokenException();
         }
 
         RefreshToken token = refreshTokenRepo.findByToken(refreshToken)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
+                .orElseThrow(() -> new InvalidTokenException());
 
         if (token.getExpiry().isBefore(Instant.now())) {
             refreshTokenRepo.delete(token);
-            throw new IllegalArgumentException("Refresh token expired");
+            throw new TokenExpiredException();
         }
 
         AppUser user = token.getUser();
