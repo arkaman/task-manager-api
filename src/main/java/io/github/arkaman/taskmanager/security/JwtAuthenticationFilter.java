@@ -27,7 +27,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain chain)
+            throws IOException, ServletException {
+
         final String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -36,42 +40,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String email = null;
 
         try {
-            email = jwtService.extractEmail(token);
-        } catch (Exception e) {
-            chain.doFilter(request, response);
-            return;
-        }
+            TokenType type = jwtService.extractTokenType(token);
 
-        if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            var userOpt = repo.findByEmailIgnoreCase(email);
-
-            if (userOpt.isEmpty()) {
+            if (type != TokenType.ACCESS) {
                 chain.doFilter(request, response);
                 return;
             }
 
-            AppUser user = userOpt.get();
+            String email = jwtService.extractEmail(token);
 
-            if (jwtService.isTokenValid(token, user.getEmail())) {
+            if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-                UsernamePasswordAuthenticationToken authToken =
-                        new UsernamePasswordAuthenticationToken(
-                                user,
-                                null,
-                                List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
-                        );
+                var userOpt = repo.findByEmailIgnoreCase(email);
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource().buildDetails(request)
-                );
+                if (userOpt.isEmpty()) {
+                    chain.doFilter(request, response);
+                    return;
+                }
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                AppUser user = userOpt.get();
+
+                if (jwtService.isTokenValid(token, user.getEmail())) {
+
+                    UsernamePasswordAuthenticationToken authToken =
+                            new UsernamePasswordAuthenticationToken(
+                                    user,
+                                    null,
+                                    List.of(new SimpleGrantedAuthority("ROLE_" + user.getRole().name()))
+                            );
+
+                    authToken.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
             }
+
+        } catch (Exception e) {
+            // invalid token -> ignore and continue
         }
+
         chain.doFilter(request, response);
     }
 }

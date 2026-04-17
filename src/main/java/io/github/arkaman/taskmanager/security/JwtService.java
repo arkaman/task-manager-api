@@ -17,29 +17,58 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
+    @Value("${jwt.access.expiration}")
+    private long accessExpiration;
+
+    @Value("${jwt.refresh.expiration}")
+    private long refreshExpiration;
 
     @PostConstruct
     private void validateSecret() {
         if (secret == null || secret.isBlank()) {
             throw new IllegalStateException("JWT secret is missing");
         }
+
+        byte[] keyBytes = Decoders.BASE64.decode(secret);
+        if (keyBytes.length < 32) {
+            throw new IllegalStateException("JWT secret must be at least 256 bits");
+        }
     }
 
     // generate token
-    public String generateToken(String email){
+    public String generateAccessToken(String email) {
         return Jwts.builder()
                 .subject(email)
+                .claim("type", TokenType.ACCESS.name())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
-                .signWith(getSigningKey(), Jwts.SIG.HS256)
+                .expiration(new Date(System.currentTimeMillis() + accessExpiration))
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public String generateRefreshToken(String email) {
+        return Jwts.builder()
+                .subject(email)
+                .claim("type", TokenType.REFRESH.name())
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(getSigningKey())
                 .compact();
     }
 
     // extract email (subject)
     public String extractEmail(String token){
         return extractClaim(token, Claims::getSubject);
+    }
+
+    // extract token type
+    public TokenType extractTokenType(String token) {
+        try {
+            String type = extractClaim(token, claims -> claims.get("type", String.class));
+            return TokenType.valueOf(type);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid token type");
+        }
     }
 
     // extract specific claim
@@ -63,7 +92,7 @@ public class JwtService {
         try {
             return extractAllClaims(token);
         } catch (Exception e) {
-            return null;
+            throw new IllegalArgumentException("Invalid JWT token");
         }
     }
 

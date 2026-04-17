@@ -1,35 +1,52 @@
 package io.github.arkaman.taskmanager.controller;
 
-import io.github.arkaman.taskmanager.domain.dto.LoginRequest;
-import io.github.arkaman.taskmanager.domain.dto.RegisterRequest;
+import io.github.arkaman.taskmanager.domain.dto.*;
+import io.github.arkaman.taskmanager.domain.entity.AppUser;
 import io.github.arkaman.taskmanager.service.AuthService;
+import io.github.arkaman.taskmanager.security.SecurityService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService service;
+    private final SecurityService securityService;
 
-    public AuthController(AuthService service) {
+    public AuthController(AuthService service, SecurityService securityService) {
         this.service = service;
+        this.securityService = securityService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Map<String, String>> register(@Valid @RequestBody RegisterRequest request) {
+    public ResponseEntity<MessageResponse> register(@Valid @RequestBody RegisterRequest request) {
 
         service.register(request);
 
-        return ResponseEntity.ok(Map.of("message", "User registered successfully"));
+        return ResponseEntity.ok(new MessageResponse("User registered successfully"));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request) {
-        String token = service.login(request);
-        return ResponseEntity.ok(Map.of("token", token));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(service.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@RequestBody RefreshRequest request) {
+        return ResponseEntity.ok(
+                service.refresh(request.refreshToken())
+        );
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<MessageResponse> logout() {
+
+        AppUser user = securityService.getCurrentUser();
+
+        service.logout(user);
+
+        return ResponseEntity.ok(new MessageResponse("Logged out successfully"));
     }
 }
