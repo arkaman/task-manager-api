@@ -1,7 +1,10 @@
 package io.github.arkaman.taskmanager.security;
 
 import io.github.arkaman.taskmanager.exception.InvalidTokenException;
+import io.github.arkaman.taskmanager.exception.TokenExpiredException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -58,8 +61,14 @@ public class JwtService {
     }
 
     // extract email (subject)
-    public String extractEmail(String token){
-        return extractClaim(token, Claims::getSubject);
+    public String extractEmail(String token) {
+        try {
+            return extractClaim(token, Claims::getSubject);
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException();
+        } catch (JwtException e) {
+            throw new InvalidTokenException();
+        }
     }
 
     // extract token type
@@ -67,34 +76,39 @@ public class JwtService {
         try {
             String type = extractClaim(token, claims -> claims.get("type", String.class));
             return TokenType.valueOf(type);
-        } catch (Exception e) {
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException();
+        } catch (JwtException | IllegalArgumentException e) {
             throw new InvalidTokenException();
         }
     }
 
     // extract specific claim
     public <T> T extractClaim(String token, Function<Claims, T> resolver) {
-        final Claims claims = extractAllClaimsSafe(token);
+        final Claims claims = extractAllClaims(token);
         return resolver.apply(claims);
     }
 
     // validate token
-    public boolean isTokenValid(String token, String email){
-        final String extractedEmail = extractEmail(token);
-        return extractedEmail.equals(email) && !isTokenExpired(token);
+    public boolean isTokenValid(String token, String email) {
+        try {
+            Claims claims = extractAllClaims(token);
+
+            String extractedEmail = claims.getSubject();
+            Date expiration = claims.getExpiration();
+
+            return extractedEmail.equals(email) && expiration.after(new Date());
+
+        } catch (ExpiredJwtException e) {
+            throw new TokenExpiredException();
+        } catch (JwtException e) {
+            throw new InvalidTokenException();
+        }
     }
 
     // check expiration
     private boolean isTokenExpired(String token) {
         return extractClaim(token, Claims::getExpiration).before(new Date());
-    }
-
-    public Claims extractAllClaimsSafe(String token) {
-        try {
-            return extractAllClaims(token);
-        } catch (Exception e) {
-            throw new InvalidTokenException();
-        }
     }
 
     // get all claims
