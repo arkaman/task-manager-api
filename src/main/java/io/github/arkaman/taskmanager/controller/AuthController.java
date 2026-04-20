@@ -2,6 +2,7 @@ package io.github.arkaman.taskmanager.controller;
 
 import io.github.arkaman.taskmanager.domain.dto.*;
 import io.github.arkaman.taskmanager.domain.entity.AppUser;
+import io.github.arkaman.taskmanager.mapper.UserMapper;
 import io.github.arkaman.taskmanager.service.AuthService;
 import io.github.arkaman.taskmanager.security.SecurityService;
 import jakarta.validation.Valid;
@@ -31,6 +32,13 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(service.login(request));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserDto> me() {
+        AppUser user = securityService.getCurrentUser();
+
+        return ResponseEntity.ok(UserMapper.toDto(user));
     }
 
     @PostMapping("/refresh")
