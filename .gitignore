@@ -29,4 +29,3 @@ build/
 
 ### Env files ###
 .env
-application-prod.properties
