@@ -2,6 +2,9 @@
 
 A secure, multi-user task management REST API built with Spring Boot, Spring Data JPA and PostgreSQL, featuring JWT-based authentication, user-scoped access control, and robust support for pagination, filtering, and search.
 
+🔗 Frontend: [Task Manager Client](https://github.com/arkaman/task-manager-client)  
+A modern UI built with React and shadcn/ui for interacting with this API.
+
 ---
 
 ## 🚀 Features
